@@ -1151,10 +1151,12 @@ void ZR_OnPlayerHurt(IGameEvent* pEvent)
 	CCSPlayerController *pVictimController = (CCSPlayerController*)pEvent->GetPlayerController("userid");
 	const char* szWeapon = pEvent->GetString("weapon");
 	int iDmgHealth = pEvent->GetInt("dmg_health");
+	int iHitGroup = pEvent->GetInt("hitgroup");
 
 	// grenade and molotov knockbacks are handled by TakeDamage detours
 	if (!pAttackerController || !pVictimController || !V_strncmp(szWeapon, "inferno", 7) || !V_strncmp(szWeapon, "hegrenade", 9))
 		return;
+	
 
 	if (pAttackerController->m_iTeamNum() == CS_TEAM_CT && pVictimController->m_iTeamNum() == CS_TEAM_T)
 		ZR_ApplyKnockback((CCSPlayerPawn*)pAttackerController->GetPawn(), (CCSPlayerPawn*)pVictimController->GetPawn(), iDmgHealth, szWeapon);
