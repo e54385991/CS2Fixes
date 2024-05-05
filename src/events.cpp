@@ -22,10 +22,13 @@
 #include "commands.h"
 #include "ctimer.h"
 #include "eventlistener.h"
+#include "networkstringtabledefs.h"
 #include "entity/cbaseplayercontroller.h"
 #include "entity/cgamerules.h"
 #include "zombiereborn.h"
 #include "votemanager.h"
+#include "leader.h"
+#include "recipientfilters.h"
 
 #include "tier0/memdbgon.h"
 
@@ -65,8 +68,24 @@ void UnregisterEventListeners()
 	g_vecEventListeners.Purge();
 }
 
+bool g_bPurgeEntityNames = false;
+FAKE_BOOL_CVAR(cs2f_purge_entity_strings, "Whether to purge the EntityNames stringtable on new rounds", g_bPurgeEntityNames, false, false);
+
 GAME_EVENT_F(round_prestart)
 {
+	if (g_bPurgeEntityNames)
+	{
+		INetworkStringTable *pEntityNames = g_pNetworkStringTableServer->FindTable("EntityNames");
+
+		if (pEntityNames)
+		{
+			int iStringCount = pEntityNames->GetNumStrings();
+			addresses::CNetworkStringTable_DeleteAllStrings(pEntityNames);
+
+			Message("Purged %i strings from EntityNames\n", iStringCount);
+		}
+	}
+
 	if (g_bEnableZR)
 		ZR_OnRoundPrestart(pEvent);
 }
@@ -178,6 +197,9 @@ GAME_EVENT_F(round_start)
 	if (g_bEnableZR)
 		ZR_OnRoundStart(pEvent);
 
+	if (g_bEnableLeader)
+		Leader_OnRoundStart(pEvent);
+
 	if (!g_bEnableTopDefender)
 		return;
 
@@ -272,4 +294,10 @@ GAME_EVENT_F(round_time_warning)
 {
 	if (g_bEnableZR)
 		ZR_OnRoundTimeWarning(pEvent);
+}
+
+GAME_EVENT_F(bullet_impact)
+{
+	if (g_bEnableLeader)
+		Leader_BulletImpact(pEvent);
 }
